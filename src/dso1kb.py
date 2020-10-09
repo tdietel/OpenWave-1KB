@@ -135,11 +135,10 @@ class Dso:
         self.readBytes=self.IO.readBytes
         self.closeIO=self.IO.closeIO
         self.write('*IDN?\n')
-        model_name=self.read().decode().split(',')[1]
-        print ('%s connected to %s successfully!'%(model_name, str))
-        if(self.osname=='win10') and ('COM' in str):
-            self.write(':USBDelay ON\n')  #Prevent data loss on Win 10.
-            print ('Send :USBDelay ON')
+        # model_name=self.read().decode().split(',')[1]
+        model_name=self.readBytes(256).decode().split(',')[1]
+        print (f'{model_name} connected to {dev} successfully!')
+
         if(model_name in sModelList[0]):
             self.chnum=2   #Got a 2 channel DSO.
             self.connection_status=1

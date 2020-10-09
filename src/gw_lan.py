@@ -44,7 +44,7 @@ class lan:
             port = 3001
 
         self.IO = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # self.IO.settimeout(1) #Set timeout
+        self.IO.settimeout(1) #Set timeout
 
         try:
             self.IO.connect((host,int(port)))
