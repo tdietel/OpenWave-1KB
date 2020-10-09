@@ -36,17 +36,20 @@ import socket
 
 class lan:
     def __init__(self, str):
-        ip_str=str.split(':')
-        ip=ip_str[0].split('.')
-        if(ip_str[1].isdigit() and ip[0].isdigit() and ip[1].isdigit() and ip[2].isdigit() and ip[3].isdigit()):
-            self.IO = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.IO.settimeout(5) #Set timeout
-            try:
-                self.IO.connect((ip_str[0], int(ip_str[1])))
-            except socket.error as e:
-                print ("__init__(), socket error: %s" % e)
+
+        if ':' in str:
+            host,port = str.split(':')
         else:
-            raise Exception('Open port error!')
+            host = str
+            port = 3001
+
+        self.IO = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # self.IO.settimeout(1) #Set timeout
+
+        try:
+            self.IO.connect((host,int(port)))
+        except socket.error as e:
+            print ("__init__(), socket error: %s" % e)
 
     def write(self, str):
         try:
@@ -58,7 +61,7 @@ class lan:
         line_buf=b''
         while True:
             try:
-                a=self.IO.recv(1)
+                a=self.IO.recv(2048)
             except socket.error as e:
                 print ("read(), socket error: %s" % e)
                 return line_buf

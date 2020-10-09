@@ -41,7 +41,7 @@ from PIL import Image
 from struct import unpack
 import struct
 import numpy as np
-import io, os, sys, time, platform
+import io, os, sys, time, platform, re
 
 __version__ = "1.01" #dso1kb module's version.
 
@@ -98,25 +98,38 @@ class Dso:
         self.info=[[], [], [], []]
         generate_lut()
 
-    def connect(self, str):
-        if(str.count('.') == 3 and str.count(':') == 1): #Check if str is ip address or not.
+    def connect(self, dev):
+
+        if (dev is None or dev=="") and 'interface' in self.config:
+            dev = self.config['interface']
+
+        # Connect to USB serial devices
+        if re.match("^(/dev/tty|COM\d|/dev/cu\.).*", dev):
             try:
-                self.IO=lan(str)
-            except:
-                print ('Open LAN port failed!')
-                return
-        elif('/dev/ttyACM' in str) or ('COM' in str) or ('/dev/cu.' in str):
-            # str is COM port.
-            try:
-                print ("Opening serial port", str)
-                self.IO=com(str)
+                print ("Opening serial port", dev)
+                self.IO=com(dev)
             except:
                 print ('Open COM port failed!')
                 return
             self.IO.clearBuf()
+
+            if(self.osname=='win10') and ('COM' in str):
+                #Prevent data loss on Win 10.
+                self.IO.write(':USBDelay ON\n')
+                print ('Send :USBDelay ON')
+
+        # Pretty much everything else: connect via network
+        elif re.match("[a-zA-Z0-9\.]+(:\d+)?", dev):
+            try:
+                self.IO=lan(dev)
+            except:
+                print ('Open LAN port failed!')
+                return
+
         else:
-            print ("ERROR: unknown device: ", str)
+            print ("ERROR: unknown device: ", dev)
             return
+
         self.write=self.IO.write
         self.read=self.IO.read
         self.readBytes=self.IO.readBytes
@@ -139,11 +152,6 @@ class Dso:
             self.connection_status=0
             print ('Device not found!')
             return
-
-        if not os.path.exists('port.config'):
-            f = open('port.config', 'wb')
-            f.write(str)
-            f.close()
 
     def getBlockData(self): #Used to get image data.
         global inBuffer
